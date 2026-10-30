@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>网页竞品批量截图与评估</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --line:#e5e7eb; --text:#1f2937; --sub:#6b7280; --pri:#2563eb; --ok:#16a34a; --err:#dc2626; --warn:#d97706; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif; background:var(--bg); color:var(--text); }
+  button { padding:5px 12px; border-radius:6px; border:1px solid var(--line); background:#fff; font:inherit; cursor:pointer; white-space:nowrap; }
+  button:hover:not(:disabled) { border-color:#c7cbd1; }
+  button.pri { background:var(--pri); color:#fff; border-color:var(--pri); }
+  button.danger { color:var(--err); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  :focus-visible { outline:2px solid var(--pri); outline-offset:1px; }
+  input[type=text], input[type=password], input[type=number], input[type=search], textarea, select { padding:6px 10px; border:1px solid var(--line); border-radius:6px; font:inherit; background:#fff; }
+  textarea { width:100%; resize:vertical; }
+  label.f { display:block; font-size:13px; color:var(--sub); margin:12px 0 4px; }
+  label.f + input, label.f + textarea { width:100%; }
+  .hint { font-size:12px; color:var(--sub); }
+  .err { color:var(--err); } .ok { color:var(--ok); } .warn { color:var(--warn); }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .spacer { flex:1; }
+
+  header { height:52px; display:flex; align-items:center; gap:16px; padding:0 20px; background:var(--card); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20; }
+  header h1 { font-size:16px; margin:0; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; background:var(--err); }
+  .dot.on { background:var(--ok); }
+  .pausebar { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; padding:4px 10px; border-radius:6px; font-size:13px; }
+
+  .layout { display:grid; grid-template-columns:260px 1fr; height:calc(100vh - 52px); }
+  aside { border-right:1px solid var(--line); background:var(--card); overflow:auto; padding:12px; }
+  aside .bt { display:block; width:100%; text-align:left; padding:8px 10px; border:1px solid transparent; border-radius:8px; margin-top:6px; background:none; }
+  aside .bt:hover { background:#f3f4f6; }
+  aside .bt.active { background:#eef2ff; border-color:#c7d2fe; }
+  aside .bt .n { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tag { display:inline-block; font-size:11px; padding:0 6px; border-radius:8px; background:#f3f4f6; color:var(--sub); margin-right:4px; }
+  .tag.m { background:#fdf4ff; color:#a21caf; }
+  .tag.p { background:#eff6ff; color:#1d4ed8; }
+  section.main { overflow:auto; padding:16px 20px 40px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+  .card h2 { font-size:15px; margin:0 0 8px; }
+
+  .toolbar { display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; }
+  .toolbar .grp { display:flex; gap:6px; align-items:center; }
+  .toolbar .grp > span { font-size:12px; color:var(--sub); }
+  .stats span { margin-right:14px; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--line); margin:12px 0; }
+  .tabs button { border:none; border-bottom:2px solid transparent; border-radius:0; background:none; padding:8px 12px; }
+  .tabs button[aria-selected=true] { border-bottom-color:var(--pri); color:var(--pri); font-weight:600; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:12px; }
+  .it { background:var(--card); border:1px solid var(--line); border-radius:10px; overflow:hidden; display:flex; flex-direction:column; position:relative; }
+  .it.sel { border-color:var(--pri); box-shadow:0 0 0 1px var(--pri); }
+  .it .th { height:240px; background:#fafafa; display:flex; align-items:center; justify-content:center; color:var(--sub); font-size:12px; cursor:pointer; border:none; padding:0; width:100%; border-radius:0; }
+  .it .th img { width:100%; height:100%; object-fit:cover; object-position:top; }
+  .it .ck { position:absolute; top:8px; left:8px; width:18px; height:18px; z-index:1; }
+  .it .bd { padding:8px 10px; font-size:13px; }
+  .it .q { font-weight:600; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .badge { display:inline-block; font-size:11px; padding:0 7px; border-radius:9px; background:#eef2ff; color:var(--pri); }
+  .badge.done { background:#dcfce7; color:var(--ok); } .badge.failed { background:#fee2e2; color:var(--err); } .badge.pending { background:#f3f4f6; color:var(--sub); }
+  .score { font-weight:700; color:#7c3aed; }
+
+  .md { font-size:13px; line-height:1.7; }
+  .md h3, .md h4 { font-size:14px; margin:10px 0 4px; }
+  .md table { border-collapse:collapse; margin:6px 0; }
+  .md td, .md th { border:1px solid var(--line); padding:3px 8px; vertical-align:top; }
+  .md p { margin:4px 0; }
+
+  /* 大图查看器 */
+  .viewer { position:fixed; inset:0; background:rgba(17,24,39,.92); z-index:50; display:grid; grid-template-columns:1fr 420px; }
+  .viewer[hidden] { display:none; }
+  .vimg { overflow:auto; display:flex; flex-direction:column; }
+  .vimg .bar { position:sticky; top:0; z-index:2; display:flex; gap:6px; align-items:center; padding:8px 12px; background:rgba(17,24,39,.85); color:#e5e7eb; flex-wrap:wrap; }
+  .vimg .bar button { background:#374151; color:#f9fafb; border-color:#4b5563; }
+  .vimg .bar input[type=range] { width:140px; }
+  .vimg .stage { padding:16px; display:flex; justify-content:center; align-items:flex-start; flex:1; }
+  .vimg .stage img { display:block; background:#fff; box-shadow:0 4px 24px rgba(0,0,0,.4); max-width:none; }
+  .vside { background:var(--card); overflow:auto; padding:16px; }
+  .rate button[aria-pressed=true] { background:var(--pri); color:#fff; border-color:var(--pri); }
+  details summary { cursor:pointer; color:var(--sub); font-size:13px; }
+
+  dialog { border:none; border-radius:12px; padding:20px; width:min(720px, 92vw); }
+  dialog::backdrop { background:rgba(0,0,0,.4); }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:#111827; color:#fff; padding:8px 16px; border-radius:8px; z-index:99; font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>网页竞品批量截图与评估 · ChatGPT</h1>
+  <span id="chromeState" aria-live="polite"><span class="dot"></span>检测中…</span>
+  <button id="btnChrome" type="button">启动 Chrome</button>
+  <span id="queueState" class="hint" aria-live="polite"></span>
+  <span class="spacer"></span>
+  <button id="btnSettings" type="button">设置</button>
+</header>
+<div class="layout">
+  <aside aria-label="批次列表">
+    <button id="btnNew" class="pri" type="button" style="width:100%">+ 新建批次</button>
+    <div id="batchList"></div>
+  </aside>
+  <section class="main" id="main" aria-live="polite"></section>
+</div>
+<div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-label="截图查看与评估">
+  <div class="vimg" id="vimgWrap">
+    <div class="bar">
+      <button type="button" data-zoom="phone" title="按手机实际尺寸显示">手机尺寸</button>
+      <button type="button" data-zoom="width">适应宽度</button>
+      <button type="button" data-zoom="screen">整图</button>
+      <button type="button" data-zoom="100">原图</button>
+      <button type="button" data-zoom="-" aria-label="缩小">－</button>
+      <input id="zoomRange" type="range" min="10" max="200" step="5" aria-label="缩放比例" />
+      <button type="button" data-zoom="+" aria-label="放大">＋</button>
+      <span id="zoomText" style="min-width:48px"></span>
+      <span class="hint" style="color:#9ca3af">Ctrl/⌘+滚轮缩放 · ←/→ 切换 · 1/2/3 评级 · Esc 关闭</span>
+    </div>
+    <div class="stage"><img id="vimg" alt="" /></div>
+  </div>
+  <div class="vside" id="vside"></div>
+</div>
+
+<dialog id="dlgExport" aria-labelledby="t-exp">
+  <h2 id="t-exp" style="margin-top:0">导出 Excel</h2>
+  <p class="hint" style="margin:0 0 8px">序号和 Query 固定导出，其余字段可勾选。</p>
+  <div id="expFields" style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px"></div>
+  <div class="row" style="margin-top:8px"><button type="button" id="expAll">全选</button><button type="button" id="expNone">全不选</button></div>
+  <div class="row" style="margin-top:12px"><span class="spacer"></span><button type="button" onclick="dlgExport.close()">取消</button><button id="expGo" class="pri" type="button">导出</button></div>
+</dialog>
+<dialog id="dlgSettings" aria-labelledby="t-set">
+  <h2 id="t-set" style="margin-top:0">设置</h2>
+  <h3 style="font-size:14px;margin:8px 0 0">VLM（OpenAI 兼容接口）</h3>
+  <label class="f" for="sBase">Base URL</label>
+  <input id="sBase" type="text" placeholder="例如 https://xxx/v1" autocomplete="off" />
+  <label class="f" for="sKey">API Key</label>
+  <input id="sKey" type="password" autocomplete="off" />
+  <label class="f" for="sModel">模型名（需支持图片输入）</label>
+  <input id="sModel" type="text" autocomplete="off" />
+  <h3 style="font-size:14px;margin:16px 0 0">popo 分享（可选）</h3>
+  <label class="f" for="sPopoUser">popo 用户名</label>
+  <input id="sPopoUser" type="text" autocomplete="off" />
+  <label class="f" for="sPopoScript">上传脚本路径</label>
+  <input id="sPopoScript" type="text" placeholder="~/.comate/skills/.system/popo/scripts/upload.py" autocomplete="off" />
+  <p class="hint">分享需要另行安装 popo 上传工具、Python 3 并完成登录。未配置不影响截图、评估和 Excel 导出。</p>
+  <label class="f" for="sEval">逐条评估 Judge Prompt（作为 system 发送，所有条目共用）</label>
+  <p class="hint" style="margin:0 0 4px">这里只写评估角色、维度、评分标准和输出格式，不要写具体 query。App、query、截图由程序放进 user 消息。固定不变的 system 才能命中 API 前缀缓存（一般要求不少于约 1024 tokens）。要求输出 JSON（dimensions 数组）时，可自动按维度拆分数并计算总分。</p>
+  <textarea id="sEval" rows="10"></textarea>
+  <div class="row"><button type="button" data-default="sEval">填入默认</button><span id="sEvalLen" class="hint"></span></div>
+  <div class="row" style="margin-top:8px">
+    <label><input id="sAnswer" type="checkbox" /> 评估时附带回答原文（帮助模型核对文字，会增加 token）</label>
+  </div>
+  <div class="row">
+    <label><input id="sCache" type="checkbox" /> 发送 cache_control 缓存标记（Claude 系模型，需网关透传才生效）</label>
+  </div>
+  <label class="f" for="sSum">整体分析 Prompt（作为 system 发送；逐条结果由程序放进 user 消息）</label>
+  <textarea id="sSum" rows="6"></textarea>
+  <div class="row"><button type="button" data-default="sSum">填入默认</button></div>
+  <h3 style="font-size:14px;margin:16px 0 0">截图节奏（防止触发 Cloudflare 人机验证，运行中修改即时生效）</h3>
+  <div class="row" style="margin-top:8px">
+    <label for="sIMin" class="hint">每条间隔</label><input id="sIMin" type="number" min="0" max="600" style="width:70px" />
+    <span class="hint">～</span><input id="sIMax" type="number" min="0" max="600" style="width:70px" aria-label="间隔上限（秒）" />
+    <span class="hint">秒（随机）</span>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <label for="sREvery" class="hint">每截</label><input id="sREvery" type="number" min="0" max="1000" style="width:70px" />
+    <label for="sRSec" class="hint">条，休息</label><input id="sRSec" type="number" min="0" max="3600" style="width:80px" />
+    <span class="hint">秒（填 0 不休息）</span>
+  </div>
+  <div class="row" style="margin-top:8px">
+    <label for="sAuto" class="hint">暂停后（连续失败、人机验证、限流等）每隔</label><input id="sAuto" type="number" min="0" max="1440" style="width:70px" />
+    <span class="hint">分钟自动继续（填 0 关闭）</span>
+  </div>
+  <p id="sPace" class="hint" style="margin:6px 0 0"></p>
+  <div class="row" style="margin-top:12px">
+    <label for="sRetry" class="hint">截图失败自动重试次数</label><input id="sRetry" type="number" min="0" max="5" style="width:70px" />
+    <label for="sConc" class="hint">评估并发数</label><input id="sConc" type="number" min="1" max="8" style="width:70px" />
+    <label for="sEvalRetry" class="hint">评估失败重试次数</label><input id="sEvalRetry" type="number" min="0" max="5" style="width:70px" />
+  </div>
+  <div id="sMsg" class="hint" role="status" style="min-height:20px;margin-top:8px"></div>
+  <div class="row" style="margin-top:8px">
+    <button id="sTest" type="button">测试连接</button>
+    <span class="spacer"></span>
+    <button type="button" onclick="dlgSettings.close()">关闭</button>
+    <button id="sSave" class="pri" type="button">保存</button>
+  </div>
+  <p class="hint">配置仅保存在本机 config.json，API Key 不会回传到页面。</p>
+</dialog>
+<script src="/app.js"></script>
+</body>
+</html>

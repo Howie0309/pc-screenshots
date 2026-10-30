@@ -1,0 +1,10 @@
+# 忽略依赖、个人数据与密钥，分享代码时不应包含这些
+node_modules/
+batches/
+screenshots/
+.chrome-profile/
+config.json
+.popo.json
+server.log
+*.bak
+.DS_Store

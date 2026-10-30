@@ -1,0 +1,17 @@
+{
+  "maxRetries": 3,
+  "evalConcurrency": 5,
+  "evalRetries": 2,
+  "intervalMin": 5,
+  "intervalMax": 10,
+  "restEvery": 15,
+  "restSeconds": 30,
+  "autoResumeMinutes": 10,
+  "baseUrl": "https://你的网关/v1",
+  "apiKey": "",
+  "model": "gpt-4o 或你的多模态模型名",
+  "popoUsername": "",
+  "popoUploadScript": "",
+  "cacheControl": false,
+  "includeAnswerText": false
+}

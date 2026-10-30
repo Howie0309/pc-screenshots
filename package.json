@@ -1,0 +1,19 @@
+{
+  "name": "pc-screenshots",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PC 网页版竞品批量长截图（Playwright + 本机 Chrome）",
+  "scripts": {
+    "test": "node --experimental-test-module-mocks --test test/*.test.mjs",
+    "test:smoke": "node test/smoke.mjs",
+    "start": "node ./server.mjs",
+    "chrome": "sh ./start-chrome.sh",
+    "shot": "node ./shot-gpt.mjs"
+  },
+  "dependencies": {
+    "exceljs": "4.4.0",
+    "playwright-core": "1.64.1",
+    "sharp": "0.35.5"
+  }
+}
